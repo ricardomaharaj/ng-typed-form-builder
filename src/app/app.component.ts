@@ -84,7 +84,7 @@ export type MakeFormGroup<T extends Record<string, V>, V = unknown> = {
   [K in keyof T]: FormControl<T[K] | null>
 }
 
-/** allowed inital arrays when making a new form group using `FormBuilder` */
+/** allowed initial arrays when making a new form group using `FormBuilder` */
 type FormBuilderGroupInitArray<T = unknown> =
   | [(T | null) | FormControlState<T | null>]
   | [(T | null) | FormControlState<T | null>, FormControlOptions | ValidatorFn | ValidatorFn[]]
@@ -125,6 +125,10 @@ function createTypedForm<T extends Record<string, V>, V = unknown>(
 
     if (typeof validatorsOrOpts === "object" && !Array.isArray(validatorsOrOpts) && !nullable) {
       validatorsOrOpts.nonNullable = true
+
+      if (asyncValidators) {
+        console.warn("@deprecated, asyncValidators have no effect when an options object is used")
+      }
     }
 
     let ctrl: AbstractControl
