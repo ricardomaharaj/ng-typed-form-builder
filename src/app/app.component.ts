@@ -127,6 +127,7 @@ function createTypedForm<T extends Record<string, V>, V = unknown>(
       validatorsOrOpts.nonNullable = true
 
       if (asyncValidators) {
+        // might be redundant since the `FormControl | FormArray` will likely print the same warning
         console.warn("@deprecated, asyncValidators have no effect when an options object is used")
       }
     }

@@ -8,7 +8,7 @@
 
   <hr />
 
-  <button (click)="addStrArrControl()">Add List Item</button>
+  <button (click)="addStrArrControl()">Add StrArr Control</button>
 
   <div *ngFor="let ctrl of typedForm.controls.strArr.controls; let i = index">
     <label>
@@ -18,7 +18,7 @@
   </div>
 
   <hr />
-  <button (click)="addObjArrControl()">Add Item Group</button>
+  <button (click)="addObjArrControl()">Add ObjArr Control</button>
 
   <div *ngFor="let itemFormGroup of typedForm.controls.objArr.controls; let i = index">
     <label>
