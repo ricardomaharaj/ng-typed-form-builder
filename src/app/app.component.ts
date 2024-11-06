@@ -64,11 +64,11 @@ export class AppComponent {
     this.typedForm.controls.objArr
   }
 
-  addControlToList() {
+  addStrArrControl() {
     this.typedForm.controls.strArr.push(new FormControl(null))
   }
 
-  addControlToItemList() {
+  addObjArrControl() {
     this.typedForm.controls.objArr.push(
       new FormGroup({
         name: new FormControl(),

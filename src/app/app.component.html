@@ -1,23 +1,32 @@
 <div [formGroup]="typedForm">
-  <button (click)="addControlToList()">Add List Item</button>
-  <div formArrayName="list">
-    <div *ngFor="let ctrl of typedForm.controls.strArr.controls; let i = index">
-      <label>
-        list item # {{ i }}
-        <input type="text" [formControl]="ctrl" />
-      </label>
-    </div>
+  <div>
+    <label>
+      str
+      <input type="text" formControlName="str" />
+    </label>
   </div>
+
   <hr />
-  <button (click)="addControlToItemList()">Add Item Group</button>
-  <div formArrayName="list">
-    <div *ngFor="let itemFormGroup of typedForm.controls.objArr.controls; let i = index">
-      <label>
-        item group item # {{ i }}: name
-        <input type="text" [formControl]="itemFormGroup.controls.name" />
-      </label>
-    </div>
+
+  <button (click)="addStrArrControl()">Add List Item</button>
+
+  <div *ngFor="let ctrl of typedForm.controls.strArr.controls; let i = index">
+    <label>
+      strArr # {{ i }}
+      <input type="text" [formControl]="ctrl" />
+    </label>
   </div>
+
+  <hr />
+  <button (click)="addObjArrControl()">Add Item Group</button>
+
+  <div *ngFor="let itemFormGroup of typedForm.controls.objArr.controls; let i = index">
+    <label>
+      objArr # {{ i }}
+      <input type="text" placeholder="name" [formControl]="itemFormGroup.controls.name" />
+    </label>
+  </div>
+
   <hr />
   <code> typedForm: {{ typedForm.value | json }} </code>
 </div>
