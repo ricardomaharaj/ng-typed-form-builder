@@ -133,7 +133,7 @@ export class AppComponent {
 
 function createTypedForm<T extends Record<string, V>, V = unknown>(
   controls: MakeFormControls<T>,
-  nullable = true
+  nonNullable = false
 ) {
   const ctrlObj: Record<string, AbstractControl> = {}
 
@@ -144,8 +144,22 @@ function createTypedForm<T extends Record<string, V>, V = unknown>(
     const validatorsOrOpts = val.at(1) as ValidatorsOrOpts | undefined
     const asyncValidators = val.at(2) as AsyncValidators | undefined
 
-    if (typeof validatorsOrOpts === "object" && !Array.isArray(validatorsOrOpts) && !nullable) {
-      validatorsOrOpts.nonNullable = true
+    let opts: FormControlOptions = { nonNullable, asyncValidators }
+
+    if (validatorsOrOpts) {
+      if (Array.isArray(validatorsOrOpts) || typeof validatorsOrOpts === "function") {
+        opts.validators = validatorsOrOpts
+      } else {
+        opts = validatorsOrOpts
+        if (typeof opts.nonNullable === "undefined") {
+          opts.nonNullable = nonNullable
+        }
+        if (asyncValidators) {
+          console.warn(
+            '@deprecated: passing "asyncValidators" with "FormControlOptions" is deprecated'
+          )
+        }
+      }
     }
 
     let ctrl: AbstractControl
@@ -154,9 +168,9 @@ function createTypedForm<T extends Record<string, V>, V = unknown>(
       // for `FormArray<FormGroup>`, already a `FormArray` so just assign it
       ctrl = stateOrValue
     } else if (Array.isArray(stateOrValue)) {
-      ctrl = new FormArray(stateOrValue, validatorsOrOpts, asyncValidators)
+      ctrl = new FormArray(stateOrValue, opts)
     } else {
-      ctrl = new FormControl(stateOrValue, validatorsOrOpts, asyncValidators)
+      ctrl = new FormControl(stateOrValue, opts)
     }
 
     ctrlObj[key] = ctrl
