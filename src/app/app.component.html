@@ -31,15 +31,17 @@
   </div>
 
   <hr />
+
   <button (click)="addObjGroupArrFormGroup()">Add objGroupArr FormGroup</button>
 
-  <div *ngFor="let itemFormGroup of typedForm.controls.objGroupArr.controls; let i = index">
+  <div *ngFor="let objFormGroup of typedForm.controls.objGroupArr.controls; let i = index">
     <label>
       objGroupArr # {{ i }}
-      <input type="text" placeholder="name" [formControl]="itemFormGroup.controls.name" />
+      <input type="text" placeholder="name" [formControl]="objFormGroup.controls.name" />
     </label>
   </div>
 
   <hr />
+
   <code> typedForm: {{ typedForm.value | json }} </code>
 </div>

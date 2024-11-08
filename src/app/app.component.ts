@@ -10,6 +10,7 @@ import {
   FormControlState,
   FormGroup,
   FormsModule,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
   ValidatorFn,
 } from "@angular/forms"
@@ -17,21 +18,21 @@ import {
 /* Type Helpers */
 
 // types to avoid over-typing the `GroupInitArray` and individual array index types
-type StateOrValue<T> = (T | null) | FormControlState<T | null>
+type StateOrValue<V> = (V | null) | FormControlState<V | null>
 type ValidatorsOrOpts = FormControlOptions | ValidatorFn | ValidatorFn[]
 type AsyncValidators = AsyncValidatorFn | AsyncValidatorFn[]
 
 // allowed initial arrays when making a new form group using `FormBuilder`
-type FormGroupInitArray<T> =
-  | [StateOrValue<T>]
-  | [StateOrValue<T>, ValidatorsOrOpts]
-  | [StateOrValue<T>, ValidatorsOrOpts, AsyncValidators]
+type FormGroupInitArray<V> =
+  | [StateOrValue<V>]
+  | [StateOrValue<V>, ValidatorsOrOpts]
+  | [StateOrValue<V>, ValidatorsOrOpts, AsyncValidators]
 
 type FormGroupControlsInit<T> = { [K in keyof T]: FormGroupInitArray<T[K]> }
 
 type MakeFormGroup<T> = { [K in keyof T]: FormControl<T[K] | null> }
 
-type FormShape<T> = { [K in keyof T]: T[K] extends FormArray ? T[K] : FormControl<T[K]> }
+type FormShape<T> = { [K in keyof T]: T[K] extends FormArray ? T[K] : FormControl<T[K] | null> }
 
 /* End Type Helpers */
 
@@ -46,13 +47,6 @@ type Form = {
   objGroupArr: FormArray<FormGroup<MakeFormGroup<SomeObj>>>
 }
 
-type NotNullForm = {
-  str: string
-  strArr: string[]
-  strCtrlArr: FormArray<FormControl<string>>
-  objGroupArr: FormArray<FormGroup<MakeFormGroup<SomeObj>>>
-}
-
 @Component({
   standalone: true,
   selector: "app-root",
@@ -60,26 +54,15 @@ type NotNullForm = {
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
 })
 export class AppComponent {
-  standardForm = new FormGroup({
-    str: new FormControl<string | null>(null),
-    strArr: new FormControl<string[]>([]),
-    strCtrlArr: new FormArray<FormControl<string | null>>([]),
-    objGroupArr: new FormArray<FormGroup<MakeFormGroup<SomeObj>>>([]),
+  standardForm = this._formBuilder.group({
+    str: [null as string | null],
+    strArr: [null as string[] | null],
+    strCtrlArr: [new FormArray<FormControl>([])],
+    objGroupArr: [new FormArray<FormGroup>([])],
   })
 
   typedForm = this._formBuilder.group(
     createTypedForm<Form>({
-      /* all arrays below have type-hints & auto-complete! */
-      str: [null],
-      strArr: [null],
-      /* `FormArray` must be provided manually when needed */
-      strCtrlArr: [new FormArray<FormControl>([])],
-      objGroupArr: [new FormArray<FormGroup>([])],
-    })
-  )
-
-  notNullTypedForm = this._formBuilder.group(
-    createNonNullableTypedForm<NotNullForm>({
       str: [null],
       strArr: [null],
       strCtrlArr: [new FormArray<FormControl>([])],
@@ -87,39 +70,26 @@ export class AppComponent {
     })
   )
 
-  constructor(private _formBuilder: FormBuilder) {
-    /* testing that hovering type-hints match normal `FormGroup` type-hints */
+  nonNullableForm = this._nonNullableFormBuilder.group({
+    str: [null as string | null],
+    strArr: [null as string[] | null],
+    strCtrlArr: [new FormArray<FormControl<string>>([])],
+    objGroupArr: [new FormArray<FormGroup<MakeFormGroup<SomeObj>>>([])],
+  })
 
-    this.standardForm.value.str
-    this.standardForm.value.strArr
-    this.standardForm.value.strCtrlArr
-    this.standardForm.value.objGroupArr
+  nonNullableTypedForm = this._formBuilder.group(
+    createNonNullableTypedForm<Form>({
+      str: [null],
+      strArr: [null],
+      strCtrlArr: [new FormArray<FormControl>([])],
+      objGroupArr: [new FormArray<FormGroup>([])],
+    })
+  )
 
-    this.standardForm.controls.str
-    this.standardForm.controls.strArr
-    this.standardForm.controls.strCtrlArr
-    this.standardForm.controls.objGroupArr
-
-    this.typedForm.value.str
-    this.typedForm.value.strArr
-    this.typedForm.value.strCtrlArr
-    this.typedForm.value.objGroupArr
-
-    this.typedForm.controls.str
-    this.typedForm.controls.strArr
-    this.typedForm.controls.strCtrlArr
-    this.typedForm.controls.objGroupArr
-
-    this.notNullTypedForm.value.str
-    this.notNullTypedForm.value.strArr
-    this.notNullTypedForm.value.strCtrlArr
-    this.notNullTypedForm.value.objGroupArr
-
-    this.notNullTypedForm.controls.str
-    this.notNullTypedForm.controls.strArr
-    this.notNullTypedForm.controls.strCtrlArr
-    this.notNullTypedForm.controls.objGroupArr
-  }
+  constructor(
+    private _formBuilder: FormBuilder,
+    private _nonNullableFormBuilder: NonNullableFormBuilder
+  ) {}
 
   addStrCtrlArrControl() {
     this.typedForm.controls.strCtrlArr.push(new FormControl())
