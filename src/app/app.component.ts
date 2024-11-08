@@ -16,52 +16,31 @@ import {
 
 /* Type Helpers */
 
-/**
- * turns `Record<string, V>` into `Record<string, FormControl<V | null>>`
- */
-type MakeFormGroup<T extends Record<string, unknown>> = {
-  [K in keyof T]: FormControl<T[K] | null>
-}
-
-/**
- * wrapper around common `FormArray<FormGroup>` typings
- */
-type MakeFormGroupFormArray<T extends Record<string, unknown>> = FormArray<
-  FormGroup<MakeFormGroup<T>>
->
-
-// helper types to not over-type the `GroupInitArray` and individual array index types
-type StateOrValue<T> = (T | null) | FormControlState<T | null>
+// types to avoid over-typing the `GroupInitArray` and individual array index types
+type StateOrValue<T, NonNullable = false> = NonNullable extends true
+  ? T | FormControlState<T>
+  : (T | null) | FormControlState<T | null>
 type ValidatorsOrOpts = FormControlOptions | ValidatorFn | ValidatorFn[]
 type AsyncValidators = AsyncValidatorFn | AsyncValidatorFn[]
 
 /**
  * allowed initial arrays when making a new form group using `FormBuilder`
- * */
-type GroupInitArray<T = unknown> =
-  | [StateOrValue<T>]
-  | [StateOrValue<T>, ValidatorsOrOpts]
-  | [StateOrValue<T>, ValidatorsOrOpts, AsyncValidators]
+ */
+type FormGroupInitArray<T, NonNullable = false> =
+  | [StateOrValue<T, NonNullable>]
+  | [StateOrValue<T, NonNullable>, ValidatorsOrOpts]
+  | [StateOrValue<T, NonNullable>, ValidatorsOrOpts, AsyncValidators]
 
-/** turns `Record<string, V>` into `Record<string, GroupInitArray<V>>` */
-type MakeFormControls<T extends Record<string, V>, V = unknown> = {
-  [K in keyof T]: GroupInitArray<T[K]>
+type FormGroupControlsInit<T, NonNullable = false> = {
+  [K in keyof T]: FormGroupInitArray<T[K], NonNullable>
 }
 
-/**
- * turns `T[]` into `FormArray<FormControl<T | null>>`
- *
- * only used with `FormArray<FormControl>`
- *
- * not to be used with `FormArray<FormGroup>`
- */
-type MakeFormArray<T extends Array<V>, V = unknown> = FormArray<FormControl<T[number] | null>>
+type MakeFormGroup<T, NonNullable = false> = {
+  [K in keyof T]: NonNullable extends true ? FormControl<T[K]> : FormControl<T[K] | null>
+}
 
-/**
- * return type of `createTypedForm`, needed to ensure that arrays are made into `FormArray<FormControl<T | null>>`
- */
-type FormShape<T extends Record<string, V>, V = unknown> = {
-  [K in keyof T]: T[K] extends Array<V> ? MakeFormArray<T[K]> : T[K]
+type FormShape<T> = {
+  [K in keyof T]: T[K] extends FormArray ? T[K] : FormControl<T[K]>
 }
 
 /* End Type Helpers */
@@ -73,7 +52,15 @@ type SomeObj = {
 type Form = {
   str: string
   strArr: string[]
-  objArr: MakeFormGroupFormArray<SomeObj>
+  strCtrlArr: FormArray<FormControl<string | null>>
+  objGroupArr: FormArray<FormGroup<MakeFormGroup<SomeObj>>>
+}
+
+type NotNullForm<NonNullable = true> = {
+  str: string
+  strArr: string[]
+  strCtrlArr: FormArray<FormControl<string>>
+  objGroupArr: FormArray<FormGroup<MakeFormGroup<SomeObj, NonNullable>>>
 }
 
 @Component({
@@ -83,62 +70,83 @@ type Form = {
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
 })
 export class AppComponent {
-  readonly standardForm = new FormGroup({
+  standardForm = new FormGroup({
     str: new FormControl<string | null>(null),
-    strArr: new FormArray<FormControl<string | null>>([]),
-    objArr: new FormArray<FormGroup<MakeFormGroup<SomeObj>>>([]),
+    strArr: new FormControl<string[]>([]),
+    strCtrlArr: new FormArray<FormControl<string | null>>([]),
+    objGroupArr: new FormArray<FormGroup<MakeFormGroup<SomeObj>>>([]),
   })
 
-  readonly typedForm = this._formBuilder.group(
+  typedForm = this._formBuilder.group(
     createTypedForm<Form>({
       /* all arrays below have type-hints & auto-complete! */
       str: [null],
-      strArr: [[]],
-      objArr: [new FormArray<FormGroup>([])],
-      //       ^ would be nice to have this handled automatically by `createTypedForm`
-      //         but I've found it unfeasible to do so since plain arrays are already handled by it
+      strArr: [null],
+      /* `FormArray` must be provided manually when needed */
+      strCtrlArr: [new FormArray<FormControl>([])],
+      objGroupArr: [new FormArray<FormGroup>([])],
     })
   )
 
-  constructor(private readonly _formBuilder: FormBuilder) {
+  notNullTypedForm = this._formBuilder.group(
+    createNonNullableTypedForm<NotNullForm>({
+      /* values must be provided in `nonNullableTypedForm` */
+      // str: [null], // <= will error
+      str: [""],
+      strArr: [[]],
+      strCtrlArr: [new FormArray<FormControl>([])],
+      objGroupArr: [new FormArray<FormGroup>([])],
+    })
+  )
+
+  constructor(private _formBuilder: FormBuilder) {
     /* testing that hovering type-hints match normal `FormGroup` type-hints */
 
     this.standardForm.value.str
+    this.standardForm.value.strArr
+    this.standardForm.value.strCtrlArr
+    this.standardForm.value.objGroupArr
+
     this.standardForm.controls.str
+    this.standardForm.controls.strArr
+    this.standardForm.controls.strCtrlArr
+    this.standardForm.controls.objGroupArr
 
     this.typedForm.value.str
-    this.typedForm.controls.str
-
-    this.standardForm.value.strArr
-    this.standardForm.controls.strArr
-
     this.typedForm.value.strArr
+    this.typedForm.value.strCtrlArr
+    this.typedForm.value.objGroupArr
+
+    this.typedForm.controls.str
     this.typedForm.controls.strArr
+    this.typedForm.controls.strCtrlArr
+    this.typedForm.controls.objGroupArr
 
-    this.standardForm.value.objArr
-    this.standardForm.controls.objArr
+    this.notNullTypedForm.value.str
+    this.notNullTypedForm.value.strArr
+    this.notNullTypedForm.value.strCtrlArr
+    this.notNullTypedForm.value.objGroupArr
 
-    this.typedForm.value.objArr
-    this.typedForm.controls.objArr
+    this.notNullTypedForm.controls.str
+    this.notNullTypedForm.controls.strArr
+    this.notNullTypedForm.controls.strCtrlArr
+    this.notNullTypedForm.controls.objGroupArr
   }
 
-  addStrArrControl() {
-    this.typedForm.controls.strArr.push(new FormControl())
+  addStrCtrlArrControl() {
+    this.typedForm.controls.strCtrlArr.push(new FormControl())
   }
 
-  addObjArrControl() {
-    this.typedForm.controls.objArr.push(new FormGroup({ name: new FormControl() }))
+  addObjArrGroup() {
+    this.typedForm.controls.objGroupArr.push(new FormGroup({ name: new FormControl() }))
   }
 }
 
-function createTypedForm<T extends Record<string, V>, V = unknown>(
-  controls: MakeFormControls<T>,
-  nonNullable = false
-) {
+function createTypedForm<T, V = unknown>(controls: FormGroupControlsInit<T>, nonNullable = false) {
   const ctrlObj: Record<string, AbstractControl> = {}
 
-  Object.entries(controls).forEach((entry) => {
-    const [key, val] = entry as [string, GroupInitArray<V>]
+  Object.entries(controls).map((entry) => {
+    const [key, val] = entry as [string, FormGroupInitArray<V>]
 
     const stateOrValue = val.at(0) as StateOrValue<V>
     const validatorsOrOpts = val.at(1) as ValidatorsOrOpts | undefined
@@ -165,10 +173,7 @@ function createTypedForm<T extends Record<string, V>, V = unknown>(
     let ctrl: AbstractControl
 
     if (stateOrValue instanceof FormArray) {
-      // for `FormArray<FormGroup>`, already a `FormArray` so just assign it
       ctrl = stateOrValue
-    } else if (Array.isArray(stateOrValue)) {
-      ctrl = new FormArray(stateOrValue, opts)
     } else {
       ctrl = new FormControl(stateOrValue, opts)
     }
@@ -177,4 +182,10 @@ function createTypedForm<T extends Record<string, V>, V = unknown>(
   })
 
   return ctrlObj as FormShape<T>
+}
+
+function createNonNullableTypedForm<T, NonNullable = true>(
+  controls: FormGroupControlsInit<T, NonNullable>
+) {
+  return createTypedForm(controls, true)
 }

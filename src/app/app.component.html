@@ -8,9 +8,22 @@
 
   <hr />
 
-  <button (click)="addStrArrControl()">Add StrArr Control</button>
+  <div>
+    <label>
+      strArr
+      <select multiple formControlName="strArr">
+        <option value="1">Option 1</option>
+        <option value="2">Option 2</option>
+        <option value="3">Option 3</option>
+      </select>
+    </label>
+  </div>
 
-  <div *ngFor="let ctrl of typedForm.controls.strArr.controls; let i = index">
+  <hr />
+
+  <button (click)="addStrCtrlArrControl()">Add strCtrlArr Control</button>
+
+  <div *ngFor="let ctrl of typedForm.controls.strCtrlArr.controls; let i = index">
     <label>
       strArr # {{ i }}
       <input type="text" [formControl]="ctrl" />
@@ -18,11 +31,11 @@
   </div>
 
   <hr />
-  <button (click)="addObjArrControl()">Add ObjArr Control</button>
+  <button (click)="addObjArrGroup()">Add objGroupArr FormGroup</button>
 
-  <div *ngFor="let itemFormGroup of typedForm.controls.objArr.controls; let i = index">
+  <div *ngFor="let itemFormGroup of typedForm.controls.objGroupArr.controls; let i = index">
     <label>
-      objArr # {{ i }}
+      objGroupArr # {{ i }}
       <input type="text" placeholder="name" [formControl]="itemFormGroup.controls.name" />
     </label>
   </div>
