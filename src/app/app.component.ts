@@ -17,31 +17,21 @@ import {
 /* Type Helpers */
 
 // types to avoid over-typing the `GroupInitArray` and individual array index types
-type StateOrValue<T, NonNullable = false> = NonNullable extends true
-  ? T | FormControlState<T>
-  : (T | null) | FormControlState<T | null>
+type StateOrValue<T> = (T | null) | FormControlState<T | null>
 type ValidatorsOrOpts = FormControlOptions | ValidatorFn | ValidatorFn[]
 type AsyncValidators = AsyncValidatorFn | AsyncValidatorFn[]
 
-/**
- * allowed initial arrays when making a new form group using `FormBuilder`
- */
-type FormGroupInitArray<T, NonNullable = false> =
-  | [StateOrValue<T, NonNullable>]
-  | [StateOrValue<T, NonNullable>, ValidatorsOrOpts]
-  | [StateOrValue<T, NonNullable>, ValidatorsOrOpts, AsyncValidators]
+// allowed initial arrays when making a new form group using `FormBuilder`
+type FormGroupInitArray<T> =
+  | [StateOrValue<T>]
+  | [StateOrValue<T>, ValidatorsOrOpts]
+  | [StateOrValue<T>, ValidatorsOrOpts, AsyncValidators]
 
-type FormGroupControlsInit<T, NonNullable = false> = {
-  [K in keyof T]: FormGroupInitArray<T[K], NonNullable>
-}
+type FormGroupControlsInit<T> = { [K in keyof T]: FormGroupInitArray<T[K]> }
 
-type MakeFormGroup<T, NonNullable = false> = {
-  [K in keyof T]: NonNullable extends true ? FormControl<T[K]> : FormControl<T[K] | null>
-}
+type MakeFormGroup<T> = { [K in keyof T]: FormControl<T[K] | null> }
 
-type FormShape<T> = {
-  [K in keyof T]: T[K] extends FormArray ? T[K] : FormControl<T[K]>
-}
+type FormShape<T> = { [K in keyof T]: T[K] extends FormArray ? T[K] : FormControl<T[K]> }
 
 /* End Type Helpers */
 
@@ -56,11 +46,11 @@ type Form = {
   objGroupArr: FormArray<FormGroup<MakeFormGroup<SomeObj>>>
 }
 
-type NotNullForm<NonNullable = true> = {
+type NotNullForm = {
   str: string
   strArr: string[]
   strCtrlArr: FormArray<FormControl<string>>
-  objGroupArr: FormArray<FormGroup<MakeFormGroup<SomeObj, NonNullable>>>
+  objGroupArr: FormArray<FormGroup<MakeFormGroup<SomeObj>>>
 }
 
 @Component({
@@ -90,10 +80,8 @@ export class AppComponent {
 
   notNullTypedForm = this._formBuilder.group(
     createNonNullableTypedForm<NotNullForm>({
-      /* values must be provided in `nonNullableTypedForm` */
-      // str: [null], // <= will error
-      str: [""],
-      strArr: [[]],
+      str: [null],
+      strArr: [null],
       strCtrlArr: [new FormArray<FormControl>([])],
       objGroupArr: [new FormArray<FormGroup>([])],
     })
@@ -137,7 +125,7 @@ export class AppComponent {
     this.typedForm.controls.strCtrlArr.push(new FormControl())
   }
 
-  addObjArrGroup() {
+  addObjGroupArrFormGroup() {
     this.typedForm.controls.objGroupArr.push(new FormGroup({ name: new FormControl() }))
   }
 }
@@ -184,8 +172,6 @@ function createTypedForm<T, V = unknown>(controls: FormGroupControlsInit<T>, non
   return ctrlObj as FormShape<T>
 }
 
-function createNonNullableTypedForm<T, NonNullable = true>(
-  controls: FormGroupControlsInit<T, NonNullable>
-) {
+function createNonNullableTypedForm<T>(controls: FormGroupControlsInit<T>) {
   return createTypedForm(controls, true)
 }
